@@ -4,7 +4,7 @@
 >
 > 更详细的java8新特性介绍请[戳](https://github.com/winterbe/java8-tutorial)
 
-![](https://github.com/xiao-ren-wu/java8/blob/master/java8-all/src/site/image/java8.jpg)
+![java8](https://github.com/xiao-ren-wu/java8/blob/master/java8-all/src/site/image/java8.jpg)
 
 ## Lambda
 
