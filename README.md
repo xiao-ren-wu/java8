@@ -192,7 +192,7 @@ Integer count = numbers.stream()
                        .reduce(0, (a, b) -> a + b);
 ~~~
 
-更多例子请[戳]()
+更多例子请[戳](https://github.com/xiao-ren-wu/java8/blob/master/java8-all/java8-stream/src/main/java/org/joywb/demo/Test3.java)
 
 ##### 数值流
 
