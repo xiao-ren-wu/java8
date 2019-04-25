@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/java8-all/java8-all.iml" filepath="$PROJECT_DIR$/java8-all/java8-all.iml" />
+      <module fileurl="file://$PROJECT_DIR$/java8-all/java8-lambda/java8-lambda.iml" filepath="$PROJECT_DIR$/java8-all/java8-lambda/java8-lambda.iml" />
+      <module fileurl="file://$PROJECT_DIR$/java8-all/java8-stream/java8-stream.iml" filepath="$PROJECT_DIR$/java8-all/java8-stream/java8-stream.iml" />
+    </modules>
+  </component>
+</project>
