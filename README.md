@@ -429,6 +429,97 @@ public interface Collector<T, A, R> {
 }
 ```
 
+### 并行计算
+
+#### jdk1.7中的并行计算框架`ForkJoin`
+
+这个框架采用经典的算法----分治算法，将任务划分成几个子任务，然后由多线程并行执行子任务，默认开启的线程数由CPU可使用的核数决定。
+
+demo:并行计算从1累加到n
+
+~~~java
+public class ForkJoinSumCalculator extends java.util.concurrent.RecursiveTask<Long> {
+
+    private final long[] numbers;
+    /**
+     * 子任务处理的数组的起始和终止位置
+     */
+    private final int start;
+    private final int end;
+
+    /**
+     * 不在将任务划分为子任务的数组大小
+     */
+    public static final long THRESHOLD = 10_000;
+
+    private ForkJoinSumCalculator(long[] numbers, int start, int end) {
+        this.numbers = numbers;
+        this.start = start;
+        this.end = end;
+    }
+
+    public ForkJoinSumCalculator(long[] numbers){
+        this(numbers,0,numbers.length);
+    }
+    @Override
+    protected Long compute() {
+        int length = end - start;
+        if (length <= THRESHOLD) {
+            //如果大小小于或等于阈值，顺序计算结果
+            return computeSequentially();
+        }
+        ForkJoinSumCalculator leftTask = new ForkJoinSumCalculator(numbers, start, start + length / 2);
+        //利用另一个ForkJoinPool线程异步执行新创建的子任务
+        leftTask.fork();
+
+        ForkJoinSumCalculator rightTask = new ForkJoinSumCalculator(numbers, start + length / 2, end);
+
+        Long rightResult = rightTask.compute();
+        Long leftResult = leftTask.join();
+
+        return rightResult + leftResult;
+    }
+
+    private Long computeSequentially() {
+        long sum = 0;
+        for (int i = start; i < end; i++) {
+            sum += numbers[i];
+        }
+        return sum;
+    }
+
+    public static void main(String[] args) {
+        long[] numbers = LongStream.rangeClosed(1, 1000000).toArray();
+        ForkJoinSumCalculator calculator = new ForkJoinSumCalculator(numbers);
+        Long invoke = new ForkJoinPool().invoke(calculator);
+        System.out.println(invoke);
+    }
+}
+~~~
+
+#### 工作窃取
+
+> 假如我们需要做一个比较大的任务，我们可以把这个任务分割为若干互不依赖的子任务，为了减少线程间的竞争，于是把这些子任务分别放到不同的队列里，并为每个队列创建一个单独的线程来执行队列里的任务，线程和队列一一对应，比如A线程负责处理A队列里的任务。但是有的线程会先把自己队列里的任务干完，而其他线程对应的队列里还有任务等待处理。干完活的线程与其等着，不如去帮其他线程干活，于是它就去其他线程的队列里窃取一个任务来执行。而在这时它们会访问同一个队列，所以为了减少窃取任务线程和被窃取任务线程之间的竞争，通常会使用双端队列，被窃取任务线程永远从双端队列的头部拿任务执行，而窃取任务的线程永远从双端队列的尾部拿任务执行。
+
+#### jdk1.8 Spliterator
+
+~~~java
+public interface Spliterator<T> {
+    boolean tryAdvance(Consumer<? super T> action);
+    Spliterator<T> trySplit();
+    long estimateSize();
+    int characteristics();
+}
+~~~
+
+1. `T`是遍历`Spliterator`元素的类型。
+
+2. `tryAdvance`方法的行为类似于普通的`Iterator`
+3. `trySplit`把一些元素划分给第二个`Spliterator`,让他们两个并行处理
+4. `estimateSize`估计还剩多少元素要遍历
+
+5. `characteristics`返回一个int，代表`Spliterator`本身特性集的编码
+
 
 
 
