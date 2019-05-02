@@ -259,15 +259,175 @@ Integer count = numbers.stream()
               .forEach(System.out::println);
       ~~~
 
+   ### 收集器
+
+   收集器主要提供了三大功能
+
+- 将元素规约和汇总为一个值
+- 元素分组
+- 元素分区
+
+#### :cow:刀小试​
+
+测试用例请[戳]()
+
+1. 找到流中的最大值
+
+~~~java
+public void test6() {
+    Optional<Dish> mostCalorieDish = menu.stream().max(comparingInt(Dish::getCalories));
+    System.out.println(mostCalorieDish.get().getName());
+}
+~~~
+
+2. 计算菜品中的总热量
+
+~~~java
+public void test7() {
+    Integer sum = menu.stream()
+            .collect(summingInt(Dish::getCalories));
+    System.out.println(sum);
+}
+~~~
+
+3. 连接字符串
+
+   参数为分隔符，可以不传
+
+~~~java
+public void test8() {
+    String joinWords = menu.stream()
+            .map(Dish::getName)
+            .collect(joining("::"));
+    System.out.println(joinWords);
+}
+~~~
+
+4. 分组
+
+   自定义一个分组方法：
+
+   ~~~java
+   private CaloricLevel getCaloricLevel(Dish dish) {
+       if (dish.getCalories() <= 400) {
+           return CaloricLevel.DIET;
+       } else if (dish.getCalories() <= 700) {
+           return CaloricLevel.NORMAL;
+       } else {
+           return CaloricLevel.FAT;
+       }
+   }
+   ~~~
+
    
 
+   1. 将菜品按照类别分组
 
+   ~~~java
+   public void test3() {
+       Map<CaloricLevel, List<Dish>> collect = menu.stream().collect(
+               groupingBy(this::getCaloricLevel)
+       );
+   }
+   ~~~
 
+   2. **多级分组**
 
+   ~~~java
+   public void test4() {
+       Map<Dish.Type, Map<CaloricLevel, List<Dish>>> collect = menu.stream()
+               .collect(
+                       groupingBy(
+                               Dish::getType, groupingBy(
+                                       this::getCaloricLevel
+                               )
+                       )
+               );
+   }
+   ~~~
 
+5. **将收集器中的结果转换为另一种类型**将菜品按照类别分组，并取出每组热量最高的菜系
 
+   `collectingAndThen`
 
+~~~java
+public void test9() {
+    Map<Dish.Type, Dish> mostCaloricByType = menu.stream()
+            .collect(
+                    groupingBy(
+                            Dish::getType,
+                            collectingAndThen(
+                                    maxBy(comparingInt(Dish::getCalories)),
+                                    Optional::get)));
+}
+~~~
 
+#### 分区
+
+分区是分组的一个特殊情况，只返回boolean类型的值，
+
+1. 将菜品按照荤素分开
+
+~~~java
+public void test10(){
+        Map<Boolean, List<Dish>> partitionMenu = menu.stream()
+                .collect(
+                        partitioningBy(Dish::isVegetarian)
+                );
+    }
+~~~
+
+### Collectors类常用静态工厂方法
+
+|      工厂方法       |        返回类型        |                             说明                             |
+| :-----------------: | :--------------------: | :----------------------------------------------------------: |
+|      `toList`       |       `List<T>`        |                  把所有的项目收集到一个List                  |
+|       `toSet`       |        `Set<T>`        |                  把所有的项目收集到一个Set                   |
+|   `toCollection`    |    `Collection<T>`     |           把所有的项目收集到给定的供应源创建的集合           |
+|     `counting`      |         `Long`         |                       计算流中元素个数                       |
+|    `summingInt`     |       `Integer`        |                    对流中一个整数属性求和                    |
+|   `averageingInt`   |        `Double`        |                 返回流中项目Integer的平均值                  |
+|  `summarizingInt`   | `IntSummaryStatistics` | 收集关于流中项目Integer属性的统计值，例如最大、最小和平均值  |
+|      `joining`      |        `String`        |       连接对流中每个项目调用toString方法所生成的字符串       |
+|       `maxBy`       |     `Optional<T>`      | 一个报过了流中按照给定比较器选出最大元素Optional,或如果流为空则为Optional.empty() |
+|     `reducing`      |    `规约产生的类型`    |                             迭代                             |
+| `collectingAndThen` |   转换函数返回值类型   |            包裹另一个收集器，对其结果应用转换函数            |
+|    `groupingBy`     |    `Map<K,List<T>>`    |                             分组                             |
+|  `partitioningBy`   | `Map<Boolean,List<T>>` |                             分区                             |
+
+### Collector接口
+
+```java
+public interface Collector<T, A, R> {
+    /**
+     * 建立新的容器结果
+     */
+    Supplier<A> supplier();
+
+    /**
+     * 将元素添加到结果容器
+     */
+    BiConsumer<A, T> accumulator();
+
+    /**
+     * 将两个流合并成一个
+     */
+    BinaryOperator<A> combiner();
+
+    /**
+     * 对结果容器应用最终转换
+     */
+    Function<A, R> finisher();
+
+    /**
+     * 定义了收集器的行为，流是否可以并行规约。以及那些优化的提示，包含三个项目的枚举
+     * UNORDERED-----规约结果不受项目中遍历和积累顺序的影响
+     * CONCURRENT----可以从多个线程同时调用，该收集器可以并行规约流
+     * IDENTITY_FINISH-----累加器A不加检查地转换为结果R是安全的
+     */
+    Set<Characteristics> characteristics();
+}
+```
 
 
 
