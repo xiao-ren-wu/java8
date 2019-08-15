@@ -207,14 +207,14 @@ Integer count = numbers.stream()
 1. 由值创建流，和之前创建的方式一样。
 
    ~~~java
-   Stream<String> stringStream = Stream.of(python", "groovy", "scala");
+   Stream<String> stringStream = Stream.of("python", "groovy", "scala");
    ~~~
 
 2. 由数组创建流
 
    ~~~java
    int numbers[] = {3,2,5,8,4,7,6,9};
-   int sum = Arrays.stream(numbers);
+   Arrays.stream(numbers);
    ~~~
 
 3. 由文件生成流
